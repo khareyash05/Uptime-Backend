@@ -8,4 +8,5 @@ type Website struct {
 	URL       string `json:"url"`
 	UserId    string `json:"user_id"`
 	WebsiteTicks []WebsiteTick `json:"website_ticks"`
+	Disabled bool `gorm:"default:false"`
 }

@@ -1,6 +1,7 @@
-package main
+package db
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -13,15 +14,20 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func main() {
+var (
+	DB *gorm.DB
+)
+
+// Init initializes the database connection
+func Init() error {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file:", err)
+		return fmt.Errorf("error loading .env file: %v", err)
 	}
 
 	zapLogger, err := zap.NewProduction()
 	if err != nil {
-		log.Fatal("Failed to initialize zap logger:", err)
+		return fmt.Errorf("failed to initialize zap logger: %v", err)
 	}
 	defer zapLogger.Sync()
 
@@ -38,32 +44,41 @@ func main() {
 	// Get database URL from environment
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		zapLogger.Fatal("DATABASE_URL environment variable is not set")
+		return fmt.Errorf("DATABASE_URL environment variable is not set")
 	}
 
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{
 		Logger: gormLogger,
 	})
 	if err != nil {
-		zapLogger.Fatal("Failed to connect to database", zap.Error(err))
+		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
 	// Test the connection
 	sqlDB, err := db.DB()
 	if err != nil {
-		zapLogger.Fatal("Failed to get database instance", zap.Error(err))
+		return fmt.Errorf("failed to get database instance: %v", err)
 	}
 
 	if err := sqlDB.Ping(); err != nil {
-		zapLogger.Fatal("Failed to ping database", zap.Error(err))
+		return fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	zapLogger.Info("Successfully connected to database")
 
 	// Run migrations
 	if err := db.AutoMigrate(&models.User{}, &models.Website{}, &models.WebsiteTick{}, &models.Validator{}); err != nil {
-		zapLogger.Fatal("Failed to run migrations", zap.Error(err))
+		return fmt.Errorf("failed to run migrations: %v", err)
 	}
 
 	zapLogger.Info("Successfully ran database migrations")
+
+	// Set the global DB variable
+	DB = db
+	return nil
+}
+
+// GetDB returns the database instance
+func GetDB() *gorm.DB {
+	return DB
 }
