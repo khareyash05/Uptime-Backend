@@ -60,7 +60,11 @@ func main() {
 			return
 		}
 		var website models.Website
-		result := dbClient.Model(models.Website{ID: websiteId, UserId: request.UserId}).First(&website)
+		result := dbClient.Model(models.Website{
+			ID:       websiteId,
+			UserId:   request.UserId,
+			Disabled: false,
+		}).First(&website)
 		if result.Error != nil {
 			c.JSON(404, gin.H{
 				"error": "Website not found",
@@ -115,7 +119,11 @@ func main() {
 		}
 
 		var website models.Website
-		result := dbClient.Model(models.Website{ID: websiteId, UserId: request.UserId,Disabled: false}).First(&website)
+		result := dbClient.Model(models.Website{
+			ID:       websiteId,
+			UserId:   request.UserId,
+			Disabled: false,
+		}).First(&website)
 		if result.Error != nil {
 			c.JSON(404, gin.H{
 				"error": "Website not found",
@@ -135,5 +143,5 @@ func main() {
 			"message": "Website disabled successfully",
 		})
 	})
-	router.Run() // listen and serve on 0.0.0.0:8080
+	router.Run()
 }
