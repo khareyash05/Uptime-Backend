@@ -6,6 +6,7 @@ import (
 	"github.com/khareyash05/uptime-backend-api/types"
 	db "github.com/khareyash05/uptime-backend-db"
 	"github.com/khareyash05/uptime-backend-db/models"
+	"github.com/rs/cors"
 
 	"gorm.io/gorm"
 )
@@ -19,6 +20,25 @@ func init() {
 
 func main() {
 	router := gin.Default()
+
+	// Configure CORS
+	corsConfig := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+	})
+
+	// Apply CORS middleware
+	router.Use(func(c *gin.Context) {
+		corsConfig.HandlerFunc(c.Writer, c.Request)
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
+
 	router.POST("/api/v1/website", authMiddleware(), func(c *gin.Context) {
 		var request types.RequestUser
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -28,16 +48,17 @@ func main() {
 			return
 		}
 
-		website := models.Website{
-			UserId: request.UserId,
-			URL:    request.URL,
+		website := &models.Website{
+			UserId:   request.UserId,
+			URL:      request.URL,
 		}
 
 		result := dbClient.Create(website)
 		if result.Error != nil {
 			c.JSON(500, gin.H{
-				"error": "Failed to create website",
+				"error": "Failed to create website: " + result.Error.Error(),
 			})
+			return
 		}
 		c.JSON(201, gin.H{
 			"message": website.ID,

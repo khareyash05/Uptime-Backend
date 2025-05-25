@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/khareyash05/uptime-backend-db"
+	db "github.com/khareyash05/uptime-backend-db"
 )
 
 func InitDB() {
