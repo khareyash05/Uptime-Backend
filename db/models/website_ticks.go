@@ -13,9 +13,9 @@ import (
 type WebsiteTick struct {
 	gorm.Model
 	ID          string        `json:"id" gorm:"primaryKey;type:uuid;"`
-	WebsiteID   string        `json:"website_id"`
+	WebsiteID   string        `json:"website_id" gorm:"type:uuid;"`
 	Timestamp   time.Time     `json:"timestamp"`
-	ValidatorID string        `json:"validator_id"`
+	ValidatorID string        `json:"validator_id" gorm:"type:uuid;"`
 	Status      WebsiteStatus `json:"status" gorm:"type:jsonb"`
 	Latency     float64       `json:"latency"`
 	Website     Website       `json:"website"`
@@ -23,8 +23,8 @@ type WebsiteTick struct {
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.
-func (w *WebsiteTick) BeforeCreate(tx *gorm.DB) error {
-	w.ID = uuid.New().String()
+func (tick *WebsiteTick) BeforeCreate(tx *gorm.DB) error {
+	tick.ID = uuid.New().String()
 	return nil
 }
 

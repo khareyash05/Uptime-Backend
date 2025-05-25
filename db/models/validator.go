@@ -7,7 +7,7 @@ import (
 
 type Validator struct {
 	gorm.Model
-	ID       string `json:"id" gorm:"primaryKey;type:uuid;"`
+	ID           string        `json:"id" gorm:"primaryKey;type:uuid;"`
 	PublicKey    string        `json:"public_key"`
 	IP           string        `json:"ip"`
 	WebsiteTicks []WebsiteTick `json:"website_ticks"`

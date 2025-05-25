@@ -11,3 +11,9 @@ func InitDB() {
 		log.Fatal(err)
 	}
 }
+
+func RunMigrations() {
+	if err := db.RunMigrations(); err != nil {
+		log.Fatal(err)
+	}
+}

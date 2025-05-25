@@ -66,15 +66,29 @@ func Init() error {
 
 	zapLogger.Info("Successfully connected to database")
 
+	// Set the global DB variable
+	DB = db
+	return nil
+}
+
+// RunMigrations runs the database migrations
+func RunMigrations() error {
+	if DB == nil {
+		return fmt.Errorf("database not initialized")
+	}
+
+	zapLogger, err := zap.NewProduction()
+	if err != nil {
+		return fmt.Errorf("failed to initialize zap logger: %v", err)
+	}
+	defer zapLogger.Sync()
+
 	// Run migrations
-	if err := db.AutoMigrate(&models.User{}, &models.Website{}, &models.WebsiteTick{}, &models.Validator{}); err != nil {
+	if err := DB.AutoMigrate(&models.User{}, &models.Website{}, &models.WebsiteTick{}, &models.Validator{}); err != nil {
 		return fmt.Errorf("failed to run migrations: %v", err)
 	}
 
 	zapLogger.Info("Successfully ran database migrations")
-
-	// Set the global DB variable
-	DB = db
 	return nil
 }
 

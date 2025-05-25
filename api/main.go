@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/khareyash05/uptime-backend-api/cmd"
 	"github.com/khareyash05/uptime-backend-api/types"
@@ -23,10 +25,12 @@ func main() {
 
 	// Configure CORS
 	corsConfig := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization", "X-User-Id", "x-user-id"},
+		ExposedHeaders:   []string{"X-User-Id"},
 		AllowCredentials: true,
+		Debug:            true,
 	})
 
 	// Apply CORS middleware
@@ -48,9 +52,11 @@ func main() {
 			return
 		}
 
+
 		website := &models.Website{
 			UserId:   request.UserId,
 			URL:      request.URL,
+			Disabled: false,
 		}
 
 		result := dbClient.Create(website)
@@ -100,23 +106,26 @@ func main() {
 	})
 
 	router.GET("/api/v1/websites", authMiddleware(), func(c *gin.Context) {
-		var request types.RequestUser2
-		if err := c.ShouldBindJSON(&request); err != nil {
+		userId := c.Query("user_id") // ✅ from ?user_id=abc123
+	
+		if userId == "" {
 			c.JSON(400, gin.H{
-				"error": "Invalid request body",
+				"error": "user_id query param is required",
 			})
 			return
 		}
 
 		var websites []models.Website
-		result := dbClient.Where("user_id = ?", request.UserId).Find(&websites)
+		result := dbClient.Where("user_id = ?", userId).Find(&websites)
 		if result.Error != nil {
+			fmt.Printf("GET /websites - Database error: %v\n", result.Error)
 			c.JSON(500, gin.H{
 				"error": "Failed to fetch websites",
 			})
 			return
 		}
 
+		fmt.Printf("GET /websites - Found %d websites\n", len(websites))
 		c.JSON(200, gin.H{
 			"data": websites,
 		})
@@ -164,5 +173,10 @@ func main() {
 			"message": "Website disabled successfully",
 		})
 	})
+
+	router.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(204)
+	})
+
 	router.Run()
 }
